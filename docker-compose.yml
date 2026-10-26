@@ -17,6 +17,7 @@ services:
     networks: [kombi_net]
 
   app:
+    image: ghcr.io/crackscout123/kombi-app:latest
     build: .
     environment:
       PORT: "8000"

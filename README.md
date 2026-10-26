@@ -10,7 +10,7 @@ Oberfläche komplett Deutsch (1.234,56 €, TT.MM.JJJJ, Europe/Berlin).
 | DB | PostgreSQL 16 über SQLAlchemy 2 (Tests: SQLite) |
 | Auth | Argon2id (argon2-cffi), signierte Session-Cookies (HttpOnly, SameSite=Lax, Secure) |
 | Mail | smtplib; SMTP-Passwort in der DB per Fernet verschlüsselt |
-| Betrieb | Multi-Stage-Dockerfile (Nutzer UID 10001), `docker-compose.yml` (lokal), `stack.yml` (Swarm/Portainer) |
+| Betrieb | Multi-Stage-Dockerfile (Nutzer UID 10001), `docker-compose.yml` (lokal), `stack.yml` (Swarm/Portainer), Image auf `ghcr.io/crackscout123/kombi-app:latest` |
 
 ## Ordnerstruktur
 ```
@@ -22,6 +22,7 @@ app/main.py          Dashboard, Einträge, Tilgung, Kontakte, Einstellungen, Sup
 app/admin.py         Nutzer, Konfiguration, E-Mail, Statistik, Support-Zugriff
 app/templates, app/static
 tests/               test_engine.py (Abschnitt 7), test_tenancy.py (Mandantentrennung, Support)
+.github/workflows/docker.yml   CI: baut das Image und pusht es nach ghcr.io
 Dockerfile, docker-compose.yml, stack.yml, .env.example
 ```
 
@@ -68,6 +69,7 @@ Hauptschuld in Cent, Stückzahl, Wochensatz, Deckel-Art/-Wert, Ausschluss-Flag) 
 | `PORT` | Port im Container (veröffentlichter Port: `APP_PORT` in der Stack-Datei) | `8000` |
 | `SEED_DEMO` | Beispieldaten (Nutzer `demo`, Passwort `DEMO_PASSWORD`) | `false` (compose: `true`) |
 | `DB_RETRIES`, `DB_RETRY_DELAY` | Warten auf die DB | `60`, `2` s |
+| `APP_IMAGE` | Image für `stack.yml` | `ghcr.io/crackscout123/kombi-app:latest` |
 
 ## Deployment
 
@@ -76,13 +78,18 @@ Hauptschuld in Cent, Stückzahl, Wochensatz, Deckel-Art/-Wert, Ausschluss-Flag) 
 docker compose up --build
 # http://localhost:8000   Admin: admin / admin-local-pass   Demo: demo / demo-passwort-123
 ```
+Ohne eigenen Build lässt sich auch das fertige Image verwenden: `docker compose pull && docker compose up`.
 
-### 2. Image bauen und pushen
+### 2. Image (GitHub Container Registry)
+Das Image wird bei jedem Push auf `main` per GitHub Actions (`.github/workflows/docker.yml`) gebaut und als `ghcr.io/crackscout123/kombi-app:latest` veröffentlicht (linux/amd64 und linux/arm64). Zusätzlich entstehen Tags mit dem Commit-Hash (`sha-<hash>`) und, bei Git-Tags wie `v1.0.0`, mit dem Tag-Namen. Das Paket ist öffentlich, zum Herunterladen ist kein Login nötig:
 ```bash
-docker build -t <REGISTRY>/<NAMESPACE>/kombi:<TAG> .
-docker login <REGISTRY>
-docker push <REGISTRY>/<NAMESPACE>/kombi:<TAG>
-# Mehrere Architekturen: docker buildx build --platform linux/amd64,linux/arm64 -t <REGISTRY>/<NAMESPACE>/kombi:<TAG> --push .
+docker pull ghcr.io/crackscout123/kombi-app:latest
+```
+Manuell bauen und pushen (optional; Token mit `write:packages` nötig):
+```bash
+echo $CR_PAT | docker login ghcr.io -u crackscout123 --password-stdin
+docker build -t ghcr.io/crackscout123/kombi-app:latest .
+docker push ghcr.io/crackscout123/kombi-app:latest
 ```
 
 ### 3. Stack in Portainer
@@ -93,10 +100,10 @@ docker push <REGISTRY>/<NAMESPACE>/kombi:<TAG>
    printf '%s' 'EIN-STARKES-ADMIN-PASSWORT' | docker secret create kombi_admin_password -
    printf '%s' 'smtp-passwort-oder-platzhalter' | docker secret create kombi_smtp_password -
    ```
-2. Falls die Registry privat ist: unter Registries hinterlegen und beim Stack „Registry-Zugang“ aktivieren (`--with-registry-auth`).
-3. Stacks → Add stack → Web editor → Inhalt von `stack.yml` einfügen.
-4. Unter *Environment variables* mindestens `APP_IMAGE`, `ADMIN_EMAIL`, `BASE_URL`, `DB_PLACEMENT` (z. B. `node.hostname == mein-knoten`) eintragen (siehe `.env.example`). Deploy.
-5. Die Datenbank ist per `placement.constraints` an einen Knoten gebunden, weil das Volume `db_data` lokal liegt. Für Betrieb ohne feste Bindung ein Netzwerk-Volume (NFS) oder einen externen Postgres nutzen (`DB_HOST`/`DATABASE_URL`).
+2. Stacks → Add stack → Web editor → Inhalt von `stack.yml` einfügen. Das Image `ghcr.io/crackscout123/kombi-app:latest` ist als Standard eingetragen, `APP_IMAGE` muss nicht gesetzt werden.
+3. Unter *Environment variables* mindestens `ADMIN_EMAIL`, `BASE_URL` und `DB_PLACEMENT` (z. B. `node.hostname == mein-knoten`) eintragen (siehe `.env.example`). Deploy.
+4. Die Datenbank ist per `placement.constraints` an einen Knoten gebunden, weil das Volume `db_data` lokal liegt. Für Betrieb ohne feste Bindung ein Netzwerk-Volume (NFS) oder einen externen Postgres nutzen (`DB_HOST`/`DATABASE_URL`).
+5. Update auf eine neue Version: Im Stack „Update the stack“ mit aktivierter Option „Re-pull image and redeploy“ ausführen, weil der Tag `latest` bleibt.
 
 ### 4. Admin, Proxy, Backup
 - **Erster Admin:** entsteht beim ersten Start aus `ADMIN_USERNAME`/`ADMIN_EMAIL`/Secret `kombi_admin_password`. Danach anmelden, Passwort in den Einstellungen ändern, SMTP unter *Admin → E-Mail* eintragen und Testmail senden.
