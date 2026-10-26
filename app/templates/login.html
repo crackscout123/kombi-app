@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block title %}Anmelden{% endblock %}
+{% block content %}
+<div class="card narrow"><h1>Anmelden</h1>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Benutzername oder E-Mail<input name="login" required autofocus autocomplete="username"></label>
+  <label>Passwort<input type="password" name="password" required autocomplete="current-password"></label>
+  <button class="btn">Anmelden</button>
+</form>
+<p class="muted"><a href="{{ url_for('auth.forgot') }}">Passwort vergessen?</a></p>
+</div>{% endblock %}

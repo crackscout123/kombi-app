@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Admin{% endblock %}
+{% block content %}
+<h1>Admin-Panel</h1>{% include "admin_nav.html" %}
+<p class="muted">Anonyme Systemstatistik – ohne Personenbezug.</p>
+<div class="cards">
+  <div class="card stat"><span>Verleihungen gesamt</span><strong>{{ stats.lent|eur }}</strong></div>
+  <div class="card stat"><span>Aufpreise gesamt</span><strong>{{ stats.surcharges|eur }}</strong></div>
+  <div class="card stat"><span>Rückzahlungen gesamt</span><strong>{{ stats.repaid|eur }}</strong></div>
+  <div class="card stat"><span>Offenes Gesamtvolumen</span><strong>{{ stats.open|eur }}</strong></div>
+  <div class="card stat"><span>Aktive Nutzer</span><strong>{{ stats.active_users }}</strong></div>
+</div>
+{% endblock %}

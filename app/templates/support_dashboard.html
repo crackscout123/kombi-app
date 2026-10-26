@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block title %}Support-Ansicht{% endblock %}
+{% block content %}
+<div class="flash error"><strong>Schreibgeschützte Support-Ansicht</strong> für Nutzer „{{ target.username }}“.
+Zugriff gültig bis {{ grant.expires_at|dtime }}.
+<form method="post" action="{{ url_for('admin.support_end') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn small">Sitzung beenden</button></form></div>
+<h1>Dashboard von {{ target.username }}</h1>
+{% include "_dash.html" %}
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% block title %}Nutzer{% endblock %}
+{% block content %}
+<h1>Nutzerverwaltung</h1>{% include "admin_nav.html" %}
+<div class="tablewrap"><table><thead><tr><th>Name</th><th>E-Mail</th><th>Rolle</th><th>Status</th><th>Erstellt</th><th></th></tr></thead><tbody>
+{% for u in users %}
+<tr><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ 'Admin' if u.is_admin else 'User' }}</td><td>{{ u.status_label }}</td><td>{{ u.created_at|ddate }}</td>
+<td class="row">{% if u.id != me.id %}
+  <form method="post" action="{{ url_for('admin.user_toggle', uid=u.id) }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn small ghost">{{ 'Sperren' if u.active else 'Entsperren' }}</button></form>
+  <form method="post" action="{{ url_for('admin.user_role', uid=u.id) }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="role" value="{{ 'user' if u.is_admin else 'admin' }}"><button class="btn small ghost">{{ 'Zu User' if u.is_admin else 'Zu Admin' }}</button></form>
+  {% if not u.password_hash %}<form method="post" action="{{ url_for('admin.user_reinvite', uid=u.id) }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn small ghost">Einladung erneut senden</button></form>{% endif %}
+{% else %}<span class="muted">du</span>{% endif %}</td></tr>
+{% endfor %}</tbody></table></div>
+
+<div class="card"><h2>Nutzer anlegen / einladen</h2>
+<form method="post" action="{{ url_for('admin.user_create') }}" class="form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="grid2">
+    <label>Benutzername<input name="username" required maxlength="64"></label>
+    <label>E-Mail<input type="email" name="email" required></label>
+    <label>Rolle<select name="role"><option value="user">User</option><option value="admin">Admin</option></select></label>
+    <label>Vorgehen<select name="mode"><option value="invite">Einladungslink per E-Mail</option><option value="manual">Manuell mit Startpasswort</option></select></label>
+    <label>Startpasswort (nur manuell, min. 10 Zeichen)<input type="password" name="password" autocomplete="new-password"></label>
+  </div>
+  <button class="btn">Anlegen</button>
+</form></div>
+{% endblock %}

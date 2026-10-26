@@ -1,0 +1,57 @@
+{% extends "base.html" %}{% block title %}{{ e.label }}{% endblock %}
+{% block content %}
+<div class="row between"><h1>{{ e.label }} <small class="muted">· {{ e.contact.display }}</small></h1>
+{% if not support %}<div class="row">
+  <a class="btn" href="{{ url_for('main.payment_new', eid=e.id) }}">Tilgung erfassen</a>
+  <a class="btn ghost" href="{{ url_for('main.entry_edit', eid=e.id) }}">Bearbeiten</a>
+  <form method="post" action="{{ url_for('main.entry_delete', eid=e.id) }}" class="inline" data-confirm="Eintrag samt Zahlungen wirklich löschen?">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn danger">Löschen</button></form></div>
+{% else %}<a class="btn ghost" href="{{ url_for('admin.support_dashboard') }}">← Zurück</a>{% endif %}</div>
+
+<div class="cards">
+  <div class="card stat"><span>Saldo heute</span><strong>{{ r.saldo|eur }}</strong>
+    <span class="tag st-{{ r.status }}">{{ STATUS[r.status] }}</span>
+    {% if r.overpaid %}<small class="warn">Überzahlt um {{ r.overpaid|eur }}</small>{% endif %}</div>
+  <div class="card stat"><span>Offene Hauptschuld</span><strong>{{ r.open_principal|eur }}</strong><small>von {{ r.principal_total|eur }}</small></div>
+  <div class="card stat"><span>Offener Aufpreis</span><strong>{{ r.open_surcharge|eur }}</strong><small>aufgelaufen {{ r.surcharge_total|eur }}</small></div>
+</div>
+
+<div class="card">
+  <h2>Details</h2>
+  <dl>
+    <dt>Richtung</dt><dd>{{ DIRECTIONS[e.direction] }}</dd>
+    <dt>Leihdatum</dt><dd>{{ e.loan_date|ddate }} (Tag {{ r.days }}, {{ r.weeks }} Woche{{ 'n' if r.weeks != 1 }} angerechnet{% if r.weeks_counted != r.weeks %}, begrenzt auf {{ r.weeks_counted }}{% endif %})</dd>
+    <dt>Wochensatz</dt><dd>{{ e.rate_cents|eur }}{% if e.overrides %} (mit {{ e.overrides|length }} Überschreibung{{ 'en' if e.overrides|length != 1 }}){% endif %}</dd>
+    <dt>Deckel</dt><dd>{% if e.cap_type == 'amount' %}max. {{ e.cap_value|eur }} Aufpreis{% elif e.cap_type == 'weeks' %}max. {{ e.cap_value }} Wochen{% else %}keiner{% endif %}{% if r.cap_reached %} – <strong>erreicht</strong>{% endif %}</dd>
+    {% if e.category == 'item' %}<dt>Wert</dt><dd>{{ e.principal_cents|eur }} gesamt · {{ (e.principal_cents // e.quantity)|eur }} pro Stück{% if e.principal_cents % e.quantity %} (gerundet){% endif %} · zurück: {{ r.returned_units }}g von {{ e.quantity }}g</dd>{% endif %}
+    {% if e.exclude_from_total %}<dt>Hinweis</dt><dd>Aus Kontakt-Gesamtabrechnung ausgeschlossen</dd>{% endif %}
+    {% if e.note %}<dt>Notiz</dt><dd>{{ e.note }}</dd>{% endif %}
+  </dl>
+</div>
+
+<div class="card">
+  <h2>Tilgungen</h2>
+  {% if e.payments %}
+  <div class="tablewrap"><table><thead><tr><th>Datum</th><th>Art</th><th class="num">Wert</th><th>Verrechnung</th><th>Notiz</th>{% if not support %}<th></th>{% endif %}</tr></thead><tbody>
+  {% for p in e.payments %}
+  <tr><td>{{ p.paid_on|ddate }}</td>
+    <td>{{ 'Zahlung' if p.kind == 'money' else 'Rückgabe' }}</td>
+    <td class="num">{% if p.kind == 'money' %}{{ p.amount_cents|eur }}{% else %}{{ p.units }}g{% endif %}</td>
+    <td>{% if p.kind == 'money' %}{{ 'zuerst Aufpreise' if p.order_mode == 'surcharge_first' else 'zuerst Hauptschuld' }}{% else %}–{% endif %}</td>
+    <td>{{ p.note or '' }}</td>
+    {% if not support %}<td class="row">
+      <a class="btn small ghost" href="{{ url_for('main.payment_edit', pid=p.id) }}">Bearbeiten</a>
+      <form method="post" action="{{ url_for('main.payment_delete', pid=p.id) }}" class="inline" data-confirm="Tilgung löschen?">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn small danger">Löschen</button></form></td>{% endif %}
+  </tr>{% endfor %}</tbody></table></div>
+  {% else %}<div class="empty">Noch keine Tilgungen.</div>{% endif %}
+</div>
+
+{% if schedule %}
+<div class="card"><h2>Aufpreis-Verlauf</h2>
+<div class="tablewrap"><table><thead><tr><th>Woche</th><th class="num">Satz</th><th class="num">Aufpreis kumuliert</th><th></th></tr></thead><tbody>
+{% for s in schedule %}<tr><td>{{ s.week }}</td><td class="num">{{ s.rate|eur }}</td><td class="num">{{ s.cumulative|eur }}</td>
+<td>{% if s.override %}<span class="tag">überschrieben</span>{% endif %}{% if not s.counted %}<span class="tag">Deckel</span>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>{% if sched_truncated %}<p class="muted">Anzeige auf 104 Wochen begrenzt.</p>{% endif %}</div>
+{% endif %}
+{% endblock %}

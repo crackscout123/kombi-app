@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% block title %}{{ 'Eintrag bearbeiten' if edit else 'Neue Leihe' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Eintrag bearbeiten' if edit else 'Neue Leihe' }}</h1>
+<form method="post" id="entry-form" class="card form" data-preview="{{ url_for('main.entry_preview') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="grid2">
+    <label>Richtung
+      <select name="direction">
+        <option value="give" {{ 'selected' if f.get('direction') == 'give' }}>Ich gebe Kombi (Forderung)</option>
+        <option value="take" {{ 'selected' if f.get('direction') == 'take' }}>Ich nehme Kombi (Verbindlichkeit)</option>
+      </select></label>
+    <label>Kategorie
+      <select name="category">
+        <option value="money" {{ 'selected' if f.get('category') != 'item' }}>Geld</option>
+        <option value="item" {{ 'selected' if f.get('category') == 'item' }}>Gerät/Objekt (g = Geräteanzahl)</option>
+      </select></label>
+    <label>Kontakt
+      <select name="contact_id" required>
+        <option value="">– wählen –</option>
+        {% for c in contacts %}<option value="{{ c.id }}" {{ 'selected' if f.get('contact_id')|string == c.id|string }}>{{ c.display }}</option>{% endfor %}
+      </select></label>
+    <label>Leihdatum (TT.MM.JJJJ)<input name="loan_date" value="{{ f.get('loan_date', '') }}" required placeholder="TT.MM.JJJJ" inputmode="numeric"></label>
+    <label class="only-item">Objekt (z. B. Ladekabel)<input name="title" maxlength="120" value="{{ f.get('title', '') }}"></label>
+    <label class="only-item">Stückzahl in g (Geräteanzahl)<input name="quantity" inputmode="numeric" value="{{ f.get('quantity', '') }}"></label>
+    <label><span class="only-money">Betrag in EUR</span><span class="only-item">Wiederbeschaffungswert gesamt in EUR</span>
+      <input name="amount" inputmode="decimal" required placeholder="0,00" value="{{ f.get('amount', '') }}"></label>
+    <label>Aufpreis pro Woche in EUR (0 = zinsfrei)<input name="rate" inputmode="decimal" value="{{ f.get('rate', '0,00') }}"></label>
+    <label>Deckel
+      <select name="cap_type">
+        <option value="none" {{ 'selected' if f.get('cap_type', 'none') == 'none' }}>Kein Deckel</option>
+        <option value="amount" {{ 'selected' if f.get('cap_type') == 'amount' }}>Maximaler Gesamtaufpreis (EUR)</option>
+        <option value="weeks" {{ 'selected' if f.get('cap_type') == 'weeks' }}>Maximale Anzahl Wochen</option>
+      </select></label>
+    <label id="cap-row">Deckel-Wert<input name="cap_value" inputmode="decimal" value="{{ f.get('cap_value', '') }}" placeholder="EUR bzw. Wochen"></label>
+  </div>
+  <label>Abweichende Wochensätze (optional, je Zeile „Woche=Betrag“, z. B. 2=8,00)
+    <textarea name="overrides" rows="3">{{ f.get('overrides', '') }}</textarea></label>
+  <label>Notiz<textarea name="note" rows="2" maxlength="2000">{{ f.get('note', '') }}</textarea></label>
+  <label class="check"><input type="checkbox" name="exclude" value="1" {{ 'checked' if f.get('exclude') == '1' }}> Aus Kontakt-Gesamtabrechnung ausschließen</label>
+  <div class="preview" id="preview" aria-live="polite">Vorschau …</div>
+  <div class="row"><button class="btn">Speichern</button>
+    <a class="btn ghost" href="{{ url_for('main.entry_detail', eid=entry.id) if edit else url_for('main.dashboard') }}">Abbrechen</a></div>
+</form>
+{% endblock %}

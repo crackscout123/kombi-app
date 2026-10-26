@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% block title %}E-Mail{% endblock %}
+{% block content %}
+<h1>E-Mail</h1>{% include "admin_nav.html" %}
+<form method="post" class="card form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="smtp">
+  <h2>SMTP</h2>
+  <div class="grid2">
+    <label>Host<input name="smtp_host" value="{{ c.host }}"></label>
+    <label>Port<input name="smtp_port" value="{{ c.port }}" inputmode="numeric"></label>
+    <label>Benutzer<input name="smtp_user" value="{{ c.user }}" autocomplete="off"></label>
+    <label>Passwort {% if has_pw %}<small class="muted">(gesetzt – leer lassen zum Beibehalten)</small>{% endif %}
+      <input type="password" name="smtp_password" placeholder="{{ '••••••••' if has_pw else '' }}" autocomplete="new-password"></label>
+    <label>Absender<input name="smtp_from" value="{{ c.sender }}"></label>
+    <label>Verschlüsselung<select name="smtp_security">
+      {% for k, v in [('starttls','STARTTLS'),('ssl','SSL/TLS'),('none','Keine')] %}<option value="{{ k }}" {{ 'selected' if c.security == k }}>{{ v }}</option>{% endfor %}</select></label>
+  </div>
+  <button class="btn">Speichern</button>
+</form>
+<form method="post" class="card form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="test">
+  <h2>Testmail</h2><p>Sendet eine Testmail an deine Adresse ({{ me.email }}).</p><button class="btn ghost">Testmail senden</button></form>
+<form method="post" class="card form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="templates">
+  <h2>Textvorlagen</h2><p class="muted">Platzhalter: {name}, {link}, {app}</p>
+  <label>Einladung – Betreff<input name="tpl_invite_subject" value="{{ t.tpl_invite_subject }}"></label>
+  <label>Einladung – Text<textarea name="tpl_invite_body" rows="6">{{ t.tpl_invite_body }}</textarea></label>
+  <label>Passwort-Reset – Betreff<input name="tpl_reset_subject" value="{{ t.tpl_reset_subject }}"></label>
+  <label>Passwort-Reset – Text<textarea name="tpl_reset_body" rows="6">{{ t.tpl_reset_body }}</textarea></label>
+  <button class="btn">Vorlagen speichern</button>
+</form>
+{% endblock %}

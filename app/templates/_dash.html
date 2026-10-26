@@ -1,0 +1,19 @@
+<div class="cards">
+  <div class="card stat"><span>Offene Forderungen</span><strong class="pos">{{ claims|eur }}</strong></div>
+  <div class="card stat"><span>Offene Verbindlichkeiten</span><strong class="neg">{{ debts|eur }}</strong></div>
+  <div class="card stat"><span>Netto-Differenz</span><strong class="{{ 'pos' if net >= 0 else 'neg' }}">{{ net|eur }}</strong></div>
+</div>
+<form method="get" class="filters">
+  <label>Richtung
+    <select name="richtung"><option value="">Alle</option>
+    <option value="give" {{ 'selected' if f_dir == 'give' }}>Verliehen</option>
+    <option value="take" {{ 'selected' if f_dir == 'take' }}>Geliehen</option></select></label>
+  <label>Status
+    <select name="status"><option value="">Alle</option>
+    {% for k, v in STATUS.items() %}<option value="{{ k }}" {{ 'selected' if f_status == k }}>{{ v }}</option>{% endfor %}</select></label>
+  {% if contacts %}<label>Kontakt
+    <select name="kontakt"><option value="">Alle</option>
+    {% for c in contacts %}<option value="{{ c.id }}" {{ 'selected' if f_contact == c.id }}>{{ c.display }}</option>{% endfor %}</select></label>{% endif %}
+  <button class="btn small">Filtern</button>
+</form>
+{% include "_rows.html" %}

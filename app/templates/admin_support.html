@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Support-Zugriff{% endblock %}
+{% block content %}
+<h1>Support-Zugriff</h1>{% include "admin_nav.html" %}
+{% if active %}<div class="flash ok">Aktive Support-Sitzung. <a href="{{ url_for('admin.support_dashboard') }}">Zur Ansicht</a></div>{% endif %}
+<form method="post" class="card form narrow">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <p>Gib Nutzername oder E-Mail und den 6-stelligen Freigabecode ein, den der Nutzer in seinen Einstellungen erzeugt hat. Der Code gilt einmalig; jeder Zugriff wird protokolliert.</p>
+  <label>Nutzername oder E-Mail<input name="ident" required autocomplete="off"></label>
+  <label>Freigabecode<input name="code" required pattern="[0-9]{6}" inputmode="numeric" maxlength="6" autocomplete="off"></label>
+  <button class="btn">Zugriff anfordern</button>
+</form>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block title %}Konfiguration{% endblock %}
+{% block content %}
+<h1>App-Konfiguration</h1>{% include "admin_nav.html" %}
+<form method="post" class="card form narrow">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Anwendungsname<input name="app_name" required maxlength="60" value="{{ c.app_name }}"></label>
+  <label>Akzentfarbe<input type="color" name="accent_color" value="{{ c.accent }}"></label>
+  <label class="check"><input type="checkbox" name="registration" value="1" {{ 'checked' if c.reg }}> Öffentliche Registrierung erlauben (Standard: aus)</label>
+  <button class="btn">Speichern</button>
+</form>
+{% endblock %}

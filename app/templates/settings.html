@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% block title %}Einstellungen{% endblock %}
+{% block content %}
+<h1>Einstellungen</h1>
+{% if me.must_change_password %}<div class="flash error">Bitte ändere dein vorläufiges Passwort.</div>{% endif %}
+<div class="card"><h2>Passwort ändern</h2>
+<form method="post" action="{{ url_for('main.change_password') }}" class="form narrow">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Aktuelles Passwort<input type="password" name="current" required autocomplete="current-password"></label>
+  <label>Neues Passwort (min. 10 Zeichen)<input type="password" name="password" required minlength="10" autocomplete="new-password"></label>
+  <label>Wiederholen<input type="password" name="password2" required minlength="10" autocomplete="new-password"></label>
+  <button class="btn">Passwort ändern</button>
+</form></div>
+
+<div class="card"><h2>Support-Freigabe</h2>
+<p>Standardmäßig sehen Admins weder Kontaktnamen noch Buchungen. Mit einem Freigabecode erlaubst du einem Admin 24 Stunden lang einmalig schreibgeschützten Einblick in dein Dashboard.</p>
+{% if new_code %}<div class="flash ok">Dein Code: <strong class="code">{{ new_code }}</strong> – gib ihn dem Admin weiter. Er wird nur jetzt angezeigt.</div>{% endif %}
+{% if grant %}
+  <p>Aktiver Code, gültig bis <strong>{{ grant.expires_at|dtime }}</strong>{% if grant.used_at %} – bereits eingelöst{% endif %}.</p>
+  <form method="post" action="{{ url_for('main.support_revoke') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn danger">Code widerrufen</button></form>
+{% endif %}
+<form method="post" action="{{ url_for('main.support_create') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn">{{ 'Neuen Code erzeugen' if grant else 'Freigabecode erzeugen' }}</button></form>
+</div>
+
+<div class="card"><h2>Zugriffsprotokoll</h2>
+{% if log %}<div class="tablewrap"><table><thead><tr><th>Zeitpunkt</th><th>Ereignis</th><th>Admin</th><th>IP</th></tr></thead><tbody>
+{% for l in log %}<tr><td>{{ l.created_at|dtime }}</td><td>{{ EVENTS.get(l.event, l.event) }}</td><td>{{ l.admin_name or '–' }}</td><td>{{ l.ip or '' }}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<div class="empty">Noch keine Ereignisse.</div>{% endif %}</div>
+{% endblock %}

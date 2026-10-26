@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block title %}Kontakte{% endblock %}
+{% block content %}
+<div class="row between"><h1>Kontakte</h1><a class="btn" href="{{ url_for('main.contact_new') }}">+ Neuer Kontakt</a></div>
+{% if items %}
+<div class="tablewrap"><table><thead><tr><th>Name</th><th>Beziehung</th><th class="num">Gesamtsaldo</th><th></th></tr></thead><tbody>
+{% for c, bal in items %}
+<tr><td><a href="{{ url_for('main.dashboard', kontakt=c.id) }}">{{ c.display }}</a></td><td>{{ RELATIONS[c.relation] }}</td>
+<td class="num"><strong class="{{ 'pos' if bal > 0 else ('neg' if bal < 0 else '') }}">{{ bal|eur }}</strong>
+<br><small class="muted">{{ 'schuldet dir' if bal > 0 else ('du schuldest' if bal < 0 else 'ausgeglichen') }}</small></td>
+<td class="row"><a class="btn small ghost" href="{{ url_for('main.entry_new', kontakt=c.id) }}">Neue Leihe</a>
+<a class="btn small ghost" href="{{ url_for('main.contact_edit', cid=c.id) }}">Bearbeiten</a>
+<form method="post" action="{{ url_for('main.contact_delete', cid=c.id) }}" class="inline" data-confirm="Kontakt löschen?">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn small danger">Löschen</button></form></td></tr>
+{% endfor %}</tbody></table></div>
+<p class="muted">Gesamtsaldo = Forderungen minus Verbindlichkeiten; Einträge mit Ausschluss-Flag zählen nicht mit.</p>
+{% else %}<div class="empty">Noch keine Kontakte. Lege deinen ersten Kontakt an.</div>{% endif %}
+{% endblock %}

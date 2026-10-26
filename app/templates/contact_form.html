@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Kontakt{% endblock %}
+{% block content %}
+<h1>{{ 'Kontakt bearbeiten' if edit else 'Neuer Kontakt' }}</h1>
+<form method="post" class="card form narrow">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Vorname (Pflicht)<input name="first_name" required maxlength="80" value="{{ f.get('first_name', '') }}"></label>
+  <label>Spitzname (optional)<input name="nickname" maxlength="80" value="{{ f.get('nickname', '') }}"></label>
+  <label>Beziehung<select name="relation">
+    {% for k, v in RELATIONS.items() %}<option value="{{ k }}" {{ 'selected' if f.get('relation') == k }}>{{ v }}</option>{% endfor %}</select></label>
+  <div class="row"><button class="btn">Speichern</button><a class="btn ghost" href="{{ url_for('main.contacts') }}">Abbrechen</a></div>
+</form>
+{% endblock %}

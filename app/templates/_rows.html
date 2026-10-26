@@ -1,0 +1,19 @@
+{% if rows %}
+<div class="tablewrap"><table>
+<thead><tr><th>Datum</th><th>Kontakt</th><th>Eintrag</th><th>Richtung</th><th class="num">Hauptschuld</th><th class="num">Saldo</th><th>Status</th></tr></thead>
+<tbody>
+{% for e, r in rows %}
+<tr>
+  <td>{{ e.loan_date|ddate }}</td>
+  <td>{{ e.contact.display }}</td>
+  <td><a href="{{ url_for('admin.support_entry', eid=e.id) if support else url_for('main.entry_detail', eid=e.id) }}">{{ e.label }}</a></td>
+  <td><span class="tag {{ e.direction }}">{{ 'Verliehen' if e.direction == 'give' else 'Geliehen' }}</span></td>
+  <td class="num">{{ e.principal_cents|eur }}</td>
+  <td class="num"><strong>{{ r.saldo|eur }}</strong>{% if r.overpaid %}<br><small class="warn">Überzahlt um {{ r.overpaid|eur }}</small>{% endif %}</td>
+  <td><span class="tag st-{{ r.status }}">{{ STATUS[r.status] }}</span></td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+{% else %}
+<div class="empty">Keine Einträge für diese Auswahl.{% if not support %} <a href="{{ url_for('main.entry_new') }}">Neue Leihe anlegen</a>{% endif %}</div>
+{% endif %}

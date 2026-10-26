@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block title %}Tilgung{% endblock %}
+{% block content %}
+<h1>{{ 'Tilgung bearbeiten' if edit else 'Tilgung erfassen' }} <small class="muted">· {{ e.label }}</small></h1>
+<form method="post" id="payment-form" class="card form"
+      data-preview="{{ url_for('main.payment_preview', eid=e.id) }}" data-exclude="{{ pid or '' }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="grid2">
+    {% if e.category == 'item' %}
+    <label>Art
+      <select name="kind"><option value="money" {{ 'selected' if f.get('kind') != 'return' }}>Geldzahlung</option>
+      <option value="return" {{ 'selected' if f.get('kind') == 'return' }}>Objektrückgabe</option></select></label>
+    {% else %}<input type="hidden" name="kind" value="money">{% endif %}
+    <label>Datum (TT.MM.JJJJ)<input name="paid_on" value="{{ f.get('paid_on', '') }}" required inputmode="numeric"></label>
+    <label class="only-money">Betrag in EUR<input name="amount" inputmode="decimal" value="{{ f.get('amount', '') }}"></label>
+    <label class="only-money">Verrechnung
+      <select name="order">
+        <option value="surcharge_first" {{ 'selected' if f.get('order') != 'principal_first' }}>Zuerst Aufpreise</option>
+        <option value="principal_first" {{ 'selected' if f.get('order') == 'principal_first' }}>Zuerst Hauptschuld</option>
+      </select></label>
+    <label class="only-return">Zurückgegebene Stückzahl (g)<input name="units" inputmode="numeric" value="{{ f.get('units', '') }}"></label>
+  </div>
+  <label>Notiz<textarea name="note" rows="2" maxlength="1000">{{ f.get('note', '') }}</textarea></label>
+  <div class="preview" id="preview" aria-live="polite">Vorschau …</div>
+  <div class="row"><button class="btn">Speichern</button>
+    <a class="btn ghost" href="{{ url_for('main.entry_detail', eid=e.id) }}">Abbrechen</a></div>
+</form>
+{% endblock %}
