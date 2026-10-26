@@ -1,0 +1,43 @@
+# Lokale Entwicklung:  docker compose up --build
+# Nur für lokal gedacht (Klartext-Passwörter, Demo-Daten, Cookie ohne Secure).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: kombi
+      POSTGRES_USER: kombi
+      POSTGRES_PASSWORD: kombi-local-pass
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kombi -d kombi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [kombi_net]
+
+  app:
+    build: .
+    environment:
+      PORT: "8000"
+      DB_HOST: db
+      DB_NAME: kombi
+      DB_USER: kombi
+      DB_PASSWORD: kombi-local-pass
+      SECRET_KEY: local-dev-secret-key-change-me-0123456789
+      COOKIE_SECURE: "false"
+      TRUST_PROXY: "false"
+      ADMIN_USERNAME: admin
+      ADMIN_EMAIL: admin@example.invalid
+      ADMIN_PASSWORD: admin-local-pass
+      SEED_DEMO: "true"
+      DEMO_PASSWORD: demo-passwort-123
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    networks: [kombi_net]
+
+volumes:
+  db_data:
+
+networks:
+  kombi_net:

@@ -1,0 +1,131 @@
+# Docker-Swarm-Stack für Portainer (Stacks -> Add stack -> Web editor).
+# Nur image:, kein build:. Variablen unter "Environment variables" in Portainer eintragen.
+# Vorher in Portainer (Secrets) anlegen: kombi_db_password, kombi_secret_key, kombi_admin_password, kombi_smtp_password
+version: "3.8"
+
+services:
+  app:
+    image: ${APP_IMAGE}
+    environment:
+      PORT: "8000"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: kombi
+      DB_USER: kombi
+      DB_PASSWORD_FILE: /run/secrets/kombi_db_password
+      SECRET_KEY_FILE: /run/secrets/kombi_secret_key
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD_FILE: /run/secrets/kombi_admin_password
+      SMTP_PASSWORD_FILE: /run/secrets/kombi_smtp_password
+      SMTP_HOST: "${SMTP_HOST:-}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_USER: "${SMTP_USER:-}"
+      SMTP_FROM: "${SMTP_FROM:-}"
+      APP_NAME: ${APP_NAME:-Kombi}
+      BASE_URL: "${BASE_URL:-}"
+      COOKIE_SECURE: "${COOKIE_SECURE:-true}"
+      TRUST_PROXY: "true"
+      SEED_DEMO: "${SEED_DEMO:-false}"
+      WEB_CONCURRENCY: "${WEB_CONCURRENCY:-2}"
+    secrets:
+      - kombi_db_password
+      - kombi_secret_key
+      - kombi_admin_password
+      - kombi_smtp_password
+    ports:
+      - target: 8000
+        published: ${APP_PORT:-8000}
+        protocol: tcp
+        mode: ingress
+    networks:
+      - kombi_net
+      # - proxy            # <- einkommentieren, wenn Traefik/NPM in einem eigenen Overlay-Netz läuft
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    deploy:
+      replicas: ${APP_REPLICAS:-1}
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+      # Traefik-Beispiel (auskommentiert; Router/Entrypoints anpassen):
+      # labels:
+      #   - traefik.enable=true
+      #   - traefik.docker.network=proxy
+      #   - traefik.http.routers.kombi.rule=Host(`kombi.example.com`)
+      #   - traefik.http.routers.kombi.entrypoints=websecure
+      #   - traefik.http.routers.kombi.tls.certresolver=letsencrypt
+      #   - traefik.http.services.kombi.loadbalancer.server.port=8000
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: kombi
+      POSTGRES_USER: kombi
+      POSTGRES_PASSWORD_FILE: /run/secrets/kombi_db_password
+    secrets:
+      - kombi_db_password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - kombi_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kombi -d kombi"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      update_config:
+        parallelism: 1
+        order: stop-first
+      placement:
+        constraints:
+          - ${DB_PLACEMENT:-node.role == manager}
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 128M
+
+volumes:
+  db_data:
+
+networks:
+  kombi_net:
+    driver: overlay
+  # proxy:
+  #   external: true
+
+secrets:
+  kombi_db_password:
+    external: true
+  kombi_secret_key:
+    external: true
+  kombi_admin_password:
+    external: true
+  kombi_smtp_password:
+    external: true
