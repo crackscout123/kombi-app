@@ -19,7 +19,7 @@
         <option value="">– wählen –</option>
         {% for c in contacts %}<option value="{{ c.id }}" {{ 'selected' if f.get('contact_id')|string == c.id|string }}>{{ c.display }}</option>{% endfor %}
       </select></label>
-    <label>Leihdatum (TT.MM.JJJJ)<input name="loan_date" value="{{ f.get('loan_date', '') }}" required placeholder="TT.MM.JJJJ" inputmode="numeric"></label>
+    <label>Leihdatum (TT.MM.JJJJ)<input type="date" name="loan_date" value="{{ f.get('loan_date', '') }}" required placeholder="TT.MM.JJJJ" inputmode="numeric"></label>
     <label class="only-item">Objekt (z. B. Ladekabel)<input name="title" maxlength="120" value="{{ f.get('title', '') }}"></label>
     <label class="only-item">Stückzahl in g (Geräteanzahl)<input name="quantity" inputmode="numeric" value="{{ f.get('quantity', '') }}"></label>
     <label><span class="only-money">Betrag in EUR</span><span class="only-item">Wiederbeschaffungswert gesamt in EUR</span>
