@@ -10,7 +10,7 @@
       <select name="kind"><option value="money" {{ 'selected' if f.get('kind') != 'return' }}>Geldzahlung</option>
       <option value="return" {{ 'selected' if f.get('kind') == 'return' }}>Objektrückgabe</option></select></label>
     {% else %}<input type="hidden" name="kind" value="money">{% endif %}
-    <label>Datum (TT.MM.JJJJ)<input name="paid_on" value="{{ f.get('paid_on', '') }}" required inputmode="numeric"></label>
+    <label>Datum (TT.MM.JJJJ)<input type="date" name="paid_on" value="{{ f.get('paid_on', '') }}" required inputmode="numeric"></label>
     <label class="only-money">Betrag in EUR<input name="amount" inputmode="decimal" value="{{ f.get('amount', '') }}"></label>
     <label class="only-money">Verrechnung
       <select name="order">
